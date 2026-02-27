@@ -13,12 +13,13 @@ def run_agents():
 
     print("Cycle complete")
 
-schedule.every(5).hours.do(run_agents)
+schedule.every(3).hours.do(run_agents)
 
 run_agents()
 
 while True:
 
     schedule.run_pending()
+
 
     time.sleep(60)

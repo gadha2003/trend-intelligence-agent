@@ -2,7 +2,7 @@ name: Trend Agent Scheduler
 
 on:
   schedule:
-    - cron: '0 */5 * * *'   # runs every 5 hours
+    - cron: '0 */3 * * *'   # runs every 5 hours
   workflow_dispatch:
 
 jobs:

@@ -2,7 +2,7 @@ name: Trend Agent Scheduler
 
 on:
   schedule:
-    - cron: '0 */3 * * *'   # runs every 5 hours
+    - cron: '0 */3 * * *'   # runs every 3 hours
   workflow_dispatch:
 
 jobs:
@@ -26,3 +26,4 @@ jobs:
         env:
           EMAIL: ${{ secrets.EMAIL }}
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}

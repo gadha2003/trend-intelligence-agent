@@ -1,54 +1,41 @@
 import sqlite3
 from datetime import datetime
 
-DB = "trends.db"
+conn = sqlite3.connect("trends.db", check_same_thread=False)
 
-def init_db():
+cursor = conn.cursor()
 
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS trends (
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS trends (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            topic TEXT,
-            source TEXT,
-            timestamp TEXT
-        )
-    """)
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    conn.commit()
-    conn.close()
+    topic TEXT,
+
+    source TEXT,
+
+    timestamp TEXT
+
+)
+""")
+
+conn.commit()
 
 def save_trend(topic, source):
 
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     cursor.execute(
         "INSERT INTO trends (topic, source, timestamp) VALUES (?, ?, ?)",
-        (topic, source, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        (topic, source, timestamp)
     )
 
     conn.commit()
-    conn.close()
 
-def get_trends():
+def get_all_trends():
 
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT topic, source, timestamp FROM trends ORDER BY timestamp DESC"
+    )
 
-    cursor.execute("""
-        SELECT topic, source, timestamp
-        FROM trends
-        ORDER BY timestamp DESC
-        LIMIT 10
-    """)
-
-    rows = cursor.fetchall()
-
-    conn.close()
-
-    return rows
-
-init_db()
+    return cursor.fetchall()

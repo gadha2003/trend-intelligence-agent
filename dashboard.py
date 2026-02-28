@@ -92,9 +92,24 @@ st.title("Multi-Agent AI Trend Monitoring Dashboard")
 DB_FILE = "trends.db"
 
 if not os.path.exists(DB_FILE):
-    st.warning("Database not found yet. Agent may still be collecting data.")
-    st.stop()
 
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS trends (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        topic TEXT,
+        source TEXT,
+        timestamp TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+    st.info("Database created. Waiting for agent to collect data...")
+    st.stop()
 # Connect to database
 conn = sqlite3.connect(DB_FILE)
 
@@ -151,3 +166,4 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Auto-refreshes every 15 seconds | Powered by Multi-Agent AI")
+

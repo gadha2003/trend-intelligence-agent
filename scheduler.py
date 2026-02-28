@@ -1,15 +1,15 @@
 from agents import google_trends_agent
 from notification_agent import send_email
 
-def run_agents():
+def run():
 
-    print("Running Trend Agent...")
-
+    print("Running agent...")
     google_trends_agent()
 
+    print("Sending email...")
     send_email()
 
-    print("Run complete.")
+    print("Done")
 
 if __name__ == "__main__":
-    run_agents()
+    run()

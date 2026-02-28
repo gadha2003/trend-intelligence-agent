@@ -2,11 +2,11 @@ name: Trend Agent Scheduler
 
 on:
   schedule:
-    - cron: '0 */3 * * *'   # runs every 3 hours
-  workflow_dispatch:        # allows manual run
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
 
 permissions:
-  contents: write           # REQUIRED for pushing trends.db
+  contents: write
 
 jobs:
   run-agent:
@@ -15,25 +15,25 @@ jobs:
 
     steps:
 
-    # Step 1: Checkout your repository
+    # Checkout repository
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
+        persist-credentials: true
         fetch-depth: 0
 
-    # Step 2: Setup Python
+    # Setup Python
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
-    # Step 3: Install dependencies
+    # Install dependencies
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    # Step 4: Run your multi-agent scheduler
+    # Run scheduler
     - name: Run scheduler
       run: python scheduler.py
       env:
@@ -41,10 +41,10 @@ jobs:
         APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
         SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
 
-    # Step 5: Commit and push updated database safely
-    - name: Commit and push trends.db
+    # Commit and push database safely
+    - name: Commit updated trends.db
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
         commit_message: "Auto-update trends database"
         file_pattern: trends.db
-        push_options: '--force'
+        branch: main

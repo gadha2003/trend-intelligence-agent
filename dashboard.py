@@ -15,31 +15,56 @@ import os
 from streamlit_autorefresh import st_autorefresh
 import requests
 
+# Database file name
 DB_FILE = "trends.db"
 
-# GitHub raw file URL
+# GitHub raw database URL
 DB_URL = "https://raw.githubusercontent.com/gadha2003/trend-intelligence-agent/main/trends.db"
 
+
+# SAFE DATABASE DOWNLOAD FUNCTION
 def download_db():
+
     try:
-        r = requests.get(DB_URL)
-        if r.status_code == 200:
-            with open(DB_FILE, "wb") as f:
+
+        temp_file = "trends_temp.db"
+
+        r = requests.get(DB_URL, timeout=15)
+
+        # Ensure valid database file
+        if r.status_code == 200 and len(r.content) > 1000:
+
+            with open(temp_file, "wb") as f:
                 f.write(r.content)
-            print("Database updated from GitHub")
+
+            # Replace old DB safely
+            os.replace(temp_file, DB_FILE)
+
+            print("Database safely updated from GitHub")
+
+        else:
+
+            print("Invalid database download or empty file")
+
     except Exception as e:
+
         print("Download error:", e)
 
+
+# Download latest database
 download_db()
+
 
 # Auto refresh every 15 seconds
 st_autorefresh(interval=15000, key="refresh")
+
 
 # Force Unicode font support
 matplotlib.rcParams['font.family'] = ['DejaVu Sans']
 matplotlib.rcParams['axes.unicode_minus'] = False
 
-# Animated Background
+
+# Animated Background and Styling
 st.markdown("""
 <style>
 
@@ -97,22 +122,20 @@ h2, h3 {
 <div id="grid-bg"></div>
 """, unsafe_allow_html=True)
 
+
 # Title
 st.title("Multi-Agent AI Trend Monitoring Dashboard")
 
-# Database file
-DB_FILE = "trends.db"
 
-# Check database exists
+# Check if database exists
 if not os.path.exists(DB_FILE):
 
-    st.warning("⚠️ Database not found on Streamlit Cloud.")
+    st.warning("⚠️ Database not found.")
 
-    st.info("""
-Upload trends.db to your GitHub repository.
-""")
+    st.info("Waiting for GitHub Actions to generate trends.db")
 
     st.stop()
+
 
 # Load data safely
 try:
@@ -129,7 +152,9 @@ try:
 except Exception as e:
 
     st.error(f"Database error: {e}")
+
     st.stop()
+
 
 # Display data
 if df.empty:
@@ -140,7 +165,7 @@ else:
 
     col1, col2 = st.columns(2)
 
-    # Table
+    # Table display
     with col1:
 
         st.subheader("Live Trends Feed")
@@ -152,7 +177,7 @@ else:
             height=400
         )
 
-    # Chart
+    # Chart display
     with col2:
 
         st.subheader("Top Trend Frequency")
@@ -173,7 +198,7 @@ else:
 
         st.pyplot(fig)
 
+
 # Footer
 st.markdown("---")
 st.caption("Auto-refreshes every 15 seconds | Powered by Multi-Agent AI")
-

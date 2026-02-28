@@ -13,6 +13,24 @@ import matplotlib.pyplot as plt
 import matplotlib
 import os
 from streamlit_autorefresh import st_autorefresh
+import requests
+
+DB_FILE = "trends.db"
+
+# GitHub raw file URL
+DB_URL = "https://raw.githubusercontent.com/gadha2003/trend-intelligence-agent/main/trends.db"
+
+def download_db():
+    try:
+        r = requests.get(DB_URL)
+        if r.status_code == 200:
+            with open(DB_FILE, "wb") as f:
+                f.write(r.content)
+            print("Database updated from GitHub")
+    except Exception as e:
+        print("Download error:", e)
+
+download_db()
 
 # Auto refresh every 15 seconds
 st_autorefresh(interval=15000, key="refresh")
@@ -158,3 +176,4 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Auto-refreshes every 15 seconds | Powered by Multi-Agent AI")
+

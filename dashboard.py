@@ -1,25 +1,25 @@
 import streamlit as st
+
+# MUST BE FIRST STREAMLIT COMMAND
+st.set_page_config(
+    page_title="Multi-Agent AI Trend Monitoring Dashboard",
+    layout="wide"
+)
+
+# Other imports AFTER set_page_config
 import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 import os
-
-# Auto refresh safely (DO NOT use time.sleep + rerun)
 from streamlit_autorefresh import st_autorefresh
 
-# Refresh every 15 seconds
+# Auto refresh every 15 seconds
 st_autorefresh(interval=15000, key="refresh")
 
 # Force Unicode font support
 matplotlib.rcParams['font.family'] = ['DejaVu Sans']
 matplotlib.rcParams['axes.unicode_minus'] = False
-
-# Page config
-st.set_page_config(
-    page_title="Multi-Agent AI Trend Monitoring Dashboard",
-    layout="wide"
-)
 
 # Animated Background
 st.markdown("""
@@ -58,12 +58,6 @@ st.markdown("""
     }
 }
 
-/* Content above background */
-.main {
-    position: relative;
-    z-index: 1;
-}
-
 /* Neon Title */
 h1 {
     color: cyan;
@@ -88,21 +82,21 @@ h2, h3 {
 # Title
 st.title("Multi-Agent AI Trend Monitoring Dashboard")
 
-# Check database exists
+# Database file
 DB_FILE = "trends.db"
 
+# Check database exists
 if not os.path.exists(DB_FILE):
 
     st.warning("⚠️ Database not found on Streamlit Cloud.")
 
     st.info("""
-This is normal because Streamlit Cloud runs on a separate server.
-
-To fix this, you must upload trends.db to your GitHub repository.
+Upload trends.db to your GitHub repository.
 """)
 
     st.stop()
-# Connect to database safely
+
+# Load data safely
 try:
 
     conn = sqlite3.connect(DB_FILE)
@@ -118,16 +112,6 @@ except Exception as e:
 
     st.error(f"Database error: {e}")
     st.stop()
-# Connect to database
-conn = sqlite3.connect(DB_FILE)
-
-# Load data
-df = pd.read_sql_query(
-    "SELECT topic, source, timestamp FROM trends ORDER BY timestamp DESC",
-    conn
-)
-
-conn.close()
 
 # Display data
 if df.empty:
@@ -174,5 +158,3 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Auto-refreshes every 15 seconds | Powered by Multi-Agent AI")
-
-

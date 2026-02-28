@@ -93,22 +93,30 @@ DB_FILE = "trends.db"
 
 if not os.path.exists(DB_FILE):
 
+    st.warning("⚠️ Database not found on Streamlit Cloud.")
+
+    st.info("""
+This is normal because Streamlit Cloud runs on a separate server.
+
+To fix this, you must upload trends.db to your GitHub repository.
+""")
+
+    st.stop()
+# Connect to database safely
+try:
+
     conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS trends (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        topic TEXT,
-        source TEXT,
-        timestamp TEXT
+    df = pd.read_sql_query(
+        "SELECT topic, source, timestamp FROM trends ORDER BY timestamp DESC",
+        conn
     )
-    """)
 
-    conn.commit()
     conn.close()
 
-    st.info("Database created. Waiting for agent to collect data...")
+except Exception as e:
+
+    st.error(f"Database error: {e}")
     st.stop()
 # Connect to database
 conn = sqlite3.connect(DB_FILE)
@@ -166,4 +174,5 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Auto-refreshes every 15 seconds | Powered by Multi-Agent AI")
+
 

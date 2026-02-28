@@ -3,7 +3,13 @@ import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
-import time
+import os
+
+# Auto refresh safely (DO NOT use time.sleep + rerun)
+from streamlit_autorefresh import st_autorefresh
+
+# Refresh every 15 seconds
+st_autorefresh(interval=15000, key="refresh")
 
 # Force Unicode font support
 matplotlib.rcParams['font.family'] = ['DejaVu Sans']
@@ -15,16 +21,16 @@ st.set_page_config(
     layout="wide"
 )
 
-# TRUE moving background layer (fixed overlay)
+# Animated Background
 st.markdown("""
 <style>
 
-/* MAIN APP BACKGROUND */
+/* MAIN BACKGROUND */
 .stApp {
     background-color: #000428;
 }
 
-/* Animated grid layer */
+/* Animated grid */
 #grid-bg {
     position: fixed;
     top: 0;
@@ -52,13 +58,13 @@ st.markdown("""
     }
 }
 
-/* Keep content above animation */
+/* Content above background */
 .main {
     position: relative;
     z-index: 1;
 }
 
-/* Neon glowing text */
+/* Neon Title */
 h1 {
     color: cyan;
     text-shadow: 0 0 10px cyan, 0 0 20px cyan;
@@ -69,7 +75,7 @@ h2, h3 {
     color: cyan;
 }
 
-/* Transparent table */
+/* Table styling */
 [data-testid="stDataFrame"] {
     background-color: rgba(0,0,0,0.6);
 }
@@ -77,15 +83,22 @@ h2, h3 {
 </style>
 
 <div id="grid-bg"></div>
-
 """, unsafe_allow_html=True)
 
 # Title
 st.title("Multi-Agent AI Trend Monitoring Dashboard")
 
-# Load database
-conn = sqlite3.connect("trends.db")
+# Check database exists
+DB_FILE = "trends.db"
 
+if not os.path.exists(DB_FILE):
+    st.warning("Database not found yet. Agent may still be collecting data.")
+    st.stop()
+
+# Connect to database
+conn = sqlite3.connect(DB_FILE)
+
+# Load data
 df = pd.read_sql_query(
     "SELECT topic, source, timestamp FROM trends ORDER BY timestamp DESC",
     conn
@@ -93,15 +106,20 @@ df = pd.read_sql_query(
 
 conn.close()
 
-# Display
+# Display data
 if df.empty:
+
     st.warning("No data available yet.")
+
 else:
 
     col1, col2 = st.columns(2)
 
+    # Table
     with col1:
+
         st.subheader("Live Trends Feed")
+
         st.dataframe(
             df,
             hide_index=True,
@@ -109,22 +127,27 @@ else:
             height=400
         )
 
+    # Chart
     with col2:
+
         st.subheader("Top Trend Frequency")
 
         trend_counts = df['topic'].value_counts().head(10)
 
         fig, ax = plt.subplots()
 
-        trend_counts.plot(kind='bar', ax=ax)
+        trend_counts.plot(
+            kind='bar',
+            ax=ax,
+            color='cyan'
+        )
 
         ax.set_xlabel("Topic")
         ax.set_ylabel("Frequency")
-
         ax.tick_params(axis='x', rotation=45)
 
         st.pyplot(fig)
 
-# Auto refresh
-time.sleep(15)
-st.rerun()
+# Footer
+st.markdown("---")
+st.caption("Auto-refreshes every 15 seconds | Powered by Multi-Agent AI")

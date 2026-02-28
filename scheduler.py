@@ -1,5 +1,3 @@
-import schedule
-import time
 from agents import google_trends_agent
 from notification_agent import send_email
 
@@ -11,15 +9,7 @@ def run_agents():
 
     send_email()
 
-    print("Cycle complete")
+    print("Run complete.")
 
-schedule.every(3).hours.do(run_agents)
-
-run_agents()
-
-while True:
-
-    schedule.run_pending()
-
-
-    time.sleep(60)
+if __name__ == "__main__":
+    run_agents()

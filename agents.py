@@ -2,33 +2,42 @@ from serpapi import GoogleSearch
 from database import save_trend
 import os
 
-SERPAPI_KEY = os.getenv("SERPAPI_KEY")
+API_KEY = os.getenv("SERPAPI_KEY")
 
 def google_trends_agent():
 
-    print("Fetching Google Trends...")
+    print("Fetching Google Trends via SerpAPI...")
 
-    params = {
-        "engine": "google_trends_trending_now",
-        "geo": "IN",
-        "api_key": SERPAPI_KEY
-    }
+    try:
 
-    search = GoogleSearch(params)
-    results = search.get_dict()
+        params = {
+            "engine": "google_trends_trending_now",
+            "geo": "IN",
+            "api_key": API_KEY
+        }
 
-    trends = results.get("trending_searches", [])
+        search = GoogleSearch(params)
 
-    if not trends:
-        print("No trends found")
-        return
+        results = search.get_dict()
 
-    for trend in trends[:10]:
+        trends = results.get("trending_searches", [])
 
-        topic = trend.get("query")
+        if not trends:
+            print("No trends found.")
+            return
 
-        if topic:
-            save_trend(topic, "Google Trends")
-            print("Saved:", topic)
+        for trend in trends[:10]:
 
-    print("Agent finished")
+            topic = trend.get("query")
+
+            if topic:
+
+                save_trend(topic, "Google Trends")
+
+                print("Saved:", topic)
+
+        print("Agent complete.")
+
+    except Exception as e:
+
+        print("Error:", e)

@@ -1,64 +1,29 @@
 import smtplib
 import os
-import sqlite3
+from database import get_trends
 
-EMAIL = os.environ.get("EMAIL")
-APP_PASSWORD = os.environ.get("APP_PASSWORD")
-
+EMAIL = os.getenv("EMAIL")
+APP_PASSWORD = os.getenv("APP_PASSWORD")
 
 def send_email():
 
-    print("Preparing email...")
+    trends = get_trends()
 
-    try:
+    if not trends:
+        print("No trends to email")
+        return
 
-        # connect to database
-        conn = sqlite3.connect("trends.db")
-        cursor = conn.cursor()
+    body = "Top Trends:\n\n"
 
-        cursor.execute("""
-            SELECT topic, source, timestamp
-            FROM trends
-            ORDER BY timestamp DESC
-            LIMIT 10
-        """)
+    for t in trends:
+        body += f"{t[0]} ({t[1]})\n"
 
-        rows = cursor.fetchall()
+    message = f"Subject: Trend Update\n\n{body}"
 
-        conn.close()
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()
+    server.login(EMAIL, APP_PASSWORD)
+    server.sendmail(EMAIL, EMAIL, message)
+    server.quit()
 
-        if not rows:
-            print("No data to send")
-            return
-
-        body = "Top Trending Topics:\n\n"
-
-        for row in rows:
-            body += f"{row[0]} ({row[1]})\n"
-
-        message = f"""Subject: Trending Topics Update
-
-{body}
-"""
-
-        print("Connecting to Gmail...")
-
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-
-        server.starttls()
-
-        server.login(EMAIL, APP_PASSWORD)
-
-        server.sendmail(
-            EMAIL,
-            EMAIL,
-            message
-        )
-
-        server.quit()
-
-        print("Email sent successfully")
-
-    except Exception as e:
-
-        print("Email error:", e)
+    print("Email sent")

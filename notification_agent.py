@@ -5,14 +5,12 @@ import sqlite3
 EMAIL = os.environ.get("EMAIL")
 APP_PASSWORD = os.environ.get("APP_PASSWORD")
 
-
 def send_email():
 
     print("Preparing email...")
 
     try:
 
-        # connect to database
         conn = sqlite3.connect("trends.db")
         cursor = conn.cursor()
 
@@ -34,6 +32,7 @@ def send_email():
         body = "Top Trending Topics:\n\n"
 
         for row in rows:
+
             body += f"{row[0]} ({row[1]})\n"
 
         message = f"""Subject: Trending Topics Update

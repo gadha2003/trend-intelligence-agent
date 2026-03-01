@@ -10,8 +10,9 @@ def run_agents():
 
     send_email()
 
-    print("Run complete.")
+    print("Agent completed successfully.")
 
-if __name__ == "__main__":
 
-    run_agents()
+
+run_agents()
+

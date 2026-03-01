@@ -17,7 +17,6 @@ def google_trends_agent():
         }
 
         search = GoogleSearch(params)
-
         results = search.get_dict()
 
         trends = results.get("trending_searches", [])
@@ -31,12 +30,10 @@ def google_trends_agent():
             topic = trend.get("query")
 
             if topic:
-
                 save_trend(topic, "Google Trends")
-
                 print("Saved:", topic)
 
-        print("Agent complete.")
+        print("Agent completed.")
 
     except Exception as e:
 

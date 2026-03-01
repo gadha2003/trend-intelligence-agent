@@ -1,17 +1,12 @@
 import sqlite3
 
 conn = sqlite3.connect("trends.db")
-
 cursor = conn.cursor()
 
-cursor.execute(
-
-    "DELETE FROM trends WHERE topic='Unknown'"
-
-)
+cursor.execute("DELETE FROM trends WHERE topic='Unknown'")
 
 conn.commit()
 
-conn.close()
+print("Unknown rows deleted")
 
-print("Cleanup complete")
+conn.close()

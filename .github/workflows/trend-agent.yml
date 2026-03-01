@@ -1,50 +1,64 @@
-name: Trend Agent Scheduler
+import smtplib
+import os
+import sqlite3
 
-on:
-  schedule:
-    - cron: '0 */3 * * *'
-  workflow_dispatch:
+EMAIL = os.environ.get("EMAIL")
+APP_PASSWORD = os.environ.get("APP_PASSWORD")
 
-permissions:
-  contents: write
 
-jobs:
-  run-agent:
+def send_email():
 
-    runs-on: ubuntu-latest
+    print("Preparing email...")
 
-    steps:
+    try:
 
-    # Checkout repository
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        persist-credentials: true
-        fetch-depth: 0
+        # connect to database
+        conn = sqlite3.connect("trends.db")
+        cursor = conn.cursor()
 
-    # Setup Python
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+        cursor.execute("""
+            SELECT topic, source, timestamp
+            FROM trends
+            ORDER BY timestamp DESC
+            LIMIT 10
+        """)
 
-    # Install dependencies
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
+        rows = cursor.fetchall()
 
-    # Run scheduler
-    - name: Run scheduler
-      run: python scheduler.py
-      env:
-        EMAIL: ${{ secrets.EMAIL }}
-        APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
-        SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+        conn.close()
 
-    # Commit and push database safely
-    - name: Commit updated trends.db
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        commit_message: "Auto-update trends database"
-        file_pattern: trends.db
-        branch: main
+        if not rows:
+            print("No data to send")
+            return
+
+        body = "Top Trending Topics:\n\n"
+
+        for row in rows:
+            body += f"{row[0]} ({row[1]})\n"
+
+        message = f"""Subject: Trending Topics Update
+
+{body}
+"""
+
+        print("Connecting to Gmail...")
+
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+
+        server.starttls()
+
+        server.login(EMAIL, APP_PASSWORD)
+
+        server.sendmail(
+            EMAIL,
+            EMAIL,
+            message
+        )
+
+        server.quit()
+
+        print("Email sent successfully")
+
+    except Exception as e:
+
+        print("Email error:", e)

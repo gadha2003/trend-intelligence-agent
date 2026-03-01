@@ -2,20 +2,14 @@ import sqlite3
 from datetime import datetime
 
 conn = sqlite3.connect("trends.db", check_same_thread=False)
-
 cursor = conn.cursor()
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS trends (
-
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-
     topic TEXT,
-
     source TEXT,
-
     timestamp TEXT
-
 )
 """)
 
@@ -34,8 +28,6 @@ def save_trend(topic, source):
 
 def get_all_trends():
 
-    cursor.execute(
-        "SELECT topic, source, timestamp FROM trends ORDER BY timestamp DESC"
-    )
+    cursor.execute("SELECT * FROM trends ORDER BY timestamp DESC")
 
     return cursor.fetchall()

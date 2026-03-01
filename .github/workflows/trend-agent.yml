@@ -12,34 +12,30 @@ jobs:
 
     steps:
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install --no-cache-dir -r requirements.txt
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
-      - name: Run scheduler
-        run: python scheduler.py
-        env:
-          EMAIL: ${{ secrets.EMAIL }}
-          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
-          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+    - name: Run scheduler
+      run: python scheduler.py
+      env:
+        EMAIL: ${{ secrets.EMAIL }}
+        APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+        SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
 
-      # THIS PART IS CRITICAL
-      - name: Commit updated database
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-
-          git add trends.db
-
-          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update trends database"
-
-          git push
+    - name: Commit updated database
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+        git add trends.db
+        git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update trends database"
+        git push

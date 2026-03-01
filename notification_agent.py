@@ -3,8 +3,8 @@ import os
 import sqlite3
 
 EMAIL = os.environ.get("EMAIL")
-
 APP_PASSWORD = os.environ.get("APP_PASSWORD")
+
 
 def send_email():
 
@@ -12,20 +12,15 @@ def send_email():
 
     try:
 
+        # connect to database
         conn = sqlite3.connect("trends.db")
-
         cursor = conn.cursor()
 
         cursor.execute("""
-
             SELECT topic, source, timestamp
-
             FROM trends
-
             ORDER BY timestamp DESC
-
             LIMIT 10
-
         """)
 
         rows = cursor.fetchall()
@@ -33,21 +28,20 @@ def send_email():
         conn.close()
 
         if not rows:
-
             print("No data to send")
-
             return
 
         body = "Top Trending Topics:\n\n"
 
         for row in rows:
-
             body += f"{row[0]} ({row[1]})\n"
 
         message = f"""Subject: Trending Topics Update
 
 {body}
 """
+
+        print("Connecting to Gmail...")
 
         server = smtplib.SMTP("smtp.gmail.com", 587)
 
@@ -56,13 +50,9 @@ def send_email():
         server.login(EMAIL, APP_PASSWORD)
 
         server.sendmail(
-
             EMAIL,
-
             EMAIL,
-
             message
-
         )
 
         server.quit()

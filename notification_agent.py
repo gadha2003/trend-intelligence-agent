@@ -1,6 +1,8 @@
 import smtplib
 import os
 import sqlite3
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 EMAIL = os.environ.get("EMAIL")
 APP_PASSWORD = os.environ.get("APP_PASSWORD")
@@ -22,7 +24,6 @@ def send_email():
         """)
 
         rows = cursor.fetchall()
-
         conn.close()
 
         if not rows:
@@ -32,32 +33,23 @@ def send_email():
         body = "Top Trending Topics:\n\n"
 
         for row in rows:
-
             body += f"{row[0]} ({row[1]})\n"
 
-        message = f"""Subject: Trending Topics Update
+        message = MIMEMultipart()
+        message["From"] = EMAIL
+        message["To"] = EMAIL
+        message["Subject"] = "Trending Topics Update"
 
-{body}
-"""
-
-        print("Connecting to Gmail...")
+        message.attach(MIMEText(body, "plain", "utf-8"))
 
         server = smtplib.SMTP("smtp.gmail.com", 587)
-
         server.starttls()
-
         server.login(EMAIL, APP_PASSWORD)
 
-        server.sendmail(
-            EMAIL,
-            EMAIL,
-            message
-        )
-
+        server.sendmail(EMAIL, EMAIL, message.as_string())
         server.quit()
 
         print("Email sent successfully")
 
     except Exception as e:
-
         print("Email error:", e)

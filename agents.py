@@ -6,51 +6,51 @@ import os
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-client = None
-if GROQ_API_KEY:
-    client = Groq(api_key=GROQ_API_KEY)
+client = Groq(api_key=GROQ_API_KEY)
 
 
-def generate_summary(topic):
-
-    if not client:
-        print("Groq client not initialized")
-        return f"{topic} is currently being widely discussed."
+# ===============================
+# Generate AI Summary
+# ===============================
+def generate_reason(topic, headlines):
 
     try:
         prompt = f"""
-Explain clearly and factually what the following topic is about.
-Do NOT explain why it is trending.
-Just explain what it is in 2-3 simple sentences.
+Summarize in 2–3 short lines what this topic is about and why it is trending in India.
 
 Topic: {topic}
+
+News Headlines:
+{headlines}
+
+Give only a clear factual explanation.
 """
 
         response = client.chat.completions.create(
-            model="llama-3.1-70b-versatile",   # ✅ CURRENT ACTIVE MODEL
+            model="mixtral-8x7b-32768",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
         )
 
-        result = response.choices[0].message.content.strip()
+        summary = response.choices[0].message.content.strip()
 
         print("Groq summary generated successfully")
-        return result
+        return summary
 
     except Exception as e:
         print("Groq error:", e)
-        return f"{topic} is currently being widely discussed."
+        return "Summary unavailable."
 
 
+# ===============================
+# Google Trends Agent
+# ===============================
 def google_trends_agent():
 
     print("========== AI Trend Agent Started ==========")
 
-    if not SERPAPI_KEY:
-        print("ERROR: SERPAPI_KEY missing.")
-        return
-
     try:
+
         params = {
             "engine": "google_trends_trending_now",
             "geo": "IN",
@@ -62,26 +62,48 @@ def google_trends_agent():
 
         trends = results.get("trending_searches", [])
 
-        if not trends:
-            print("No trends found.")
-            return
-
         for trend in trends[:10]:
 
             topic = trend.get("query")
 
-            if not topic:
-                continue
+            if topic:
 
-            print("Processing:", topic)
+                print("Processing:", topic)
 
-            summary = generate_summary(topic)
+                # --------------------------
+                # Fetch Related News
+                # --------------------------
+                news_params = {
+                    "engine": "google_news",
+                    "q": topic,
+                    "api_key": SERPAPI_KEY
+                }
 
-            save_trend(topic, "Google Trends", summary)
+                news_search = GoogleSearch(news_params)
+                news_results = news_search.get_dict()
 
-            print("Saved:", topic)
+                articles = news_results.get("news_results", [])[:3]
+
+                headlines = "\n".join(
+                    [article["title"] for article in articles if "title" in article]
+                )
+
+                if not headlines.strip():
+                    headlines = "No major news coverage found."
+
+                # --------------------------
+                # Generate AI Summary
+                # --------------------------
+                reason = generate_reason(topic, headlines)
+
+                # --------------------------
+                # Save to Database
+                # --------------------------
+                save_trend(topic, "Google Trends", reason)
+
+                print("Saved:", topic)
 
         print("========== Agent Completed Successfully ==========")
 
     except Exception as e:
-        print("Agent crash:", e)
+        print("Critical Error:", e)

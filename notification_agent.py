@@ -33,9 +33,13 @@ def send_email():
         body = "AI Trend Intelligence Report\n\n"
 
         for row in rows:
-            body += f"Topic: {row[0]}\n"
-            body += f"Summary: {row[1]}\n"
-            body += f"Time: {row[2]}\n"
+            topic = row[0]
+            summary = row[1]
+            timestamp = row[2]
+
+            body += f"Topic: {topic}\n"
+            body += f"Summary: {summary}\n"
+            body += f"Time: {timestamp}\n"
             body += "-" * 50 + "\n\n"
 
         message = MIMEMultipart()

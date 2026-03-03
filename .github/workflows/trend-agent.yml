@@ -52,7 +52,7 @@ jobs:
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
 
-        git pull origin main
+       
 
         git add trends.db
         git commit -m "Auto-update trends database" || echo "No changes to commit"

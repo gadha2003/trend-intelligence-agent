@@ -1,87 +1,155 @@
-from serpapi import GoogleSearch
-from database import save_trend
-from groq import Groq
+import streamlit as st
+import sqlite3
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
 import os
+from streamlit_autorefresh import st_autorefresh
 
-SERPAPI_KEY = os.getenv("SERPAPI_KEY")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# =============================
+# Page Config
+# =============================
+st.set_page_config(
+    page_title="AI Trend Intelligence Dashboard",
+    layout="wide"
+)
 
-client = None
-if GROQ_API_KEY:
-    client = Groq(api_key=GROQ_API_KEY)
+# Auto refresh every 15 seconds
+st_autorefresh(interval=15000, key="refresh")
 
+# Unicode font support
+matplotlib.rcParams['font.family'] = ['DejaVu Sans']
+matplotlib.rcParams['axes.unicode_minus'] = False
 
-def generate_summary(topic):
+# =============================
+# Animated Background Styling
+# =============================
+st.markdown("""
+<style>
 
-    if not client:
-        print("Groq client not initialized")
-        return f"{topic} is currently being widely discussed."
+.stApp {
+    background-color: #000428;
+}
 
-    try:
-        prompt = f"""
-Explain clearly and factually what the following topic is about.
-Do NOT explain why it is trending.
-Just explain what it is in 2-3 simple sentences.
+#grid-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 200vw;
+    height: 200vh;
+    pointer-events: none;
+    z-index: 0;
 
-Topic: {topic}
-"""
+    background-image:
+        linear-gradient(rgba(0,255,255,0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,255,0.2) 1px, transparent 1px);
 
-        response = client.chat.completions.create(
-            model="llama-3.1-70b-versatile",  # ✅ CURRENT WORKING MODEL
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
+    background-size: 50px 50px;
+    animation: moveGrid 10s linear infinite;
+}
+
+@keyframes moveGrid {
+    from { transform: translate(0px, 0px); }
+    to { transform: translate(-50px, -50px); }
+}
+
+h1 {
+    color: cyan;
+    text-shadow: 0 0 10px cyan, 0 0 20px cyan;
+    text-align: center;
+}
+
+h2, h3 {
+    color: cyan;
+}
+
+[data-testid="stDataFrame"] {
+    background-color: rgba(0,0,0,0.6);
+    border-radius: 10px;
+}
+
+</style>
+
+<div id="grid-bg"></div>
+""", unsafe_allow_html=True)
+
+st.title("AI Trend Intelligence Dashboard")
+
+# =============================
+# Correct Database Path (IMPORTANT FIX)
+# =============================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_FILE = os.path.join(BASE_DIR, "trends.db")
+
+if not os.path.exists(DB_FILE):
+    st.error("Database file not found.")
+    st.stop()
+
+# =============================
+# Load Data
+# =============================
+try:
+    conn = sqlite3.connect(DB_FILE)
+
+    df = pd.read_sql_query(
+        "SELECT topic, reason, timestamp FROM trends ORDER BY timestamp DESC",
+        conn
+    )
+
+    conn.close()
+
+except Exception as e:
+    st.error(f"Database error: {e}")
+    st.stop()
+
+# Debug row counter
+st.write("Rows loaded from database:", len(df))
+
+# =============================
+# Display Data
+# =============================
+if df.empty:
+    st.warning("No data available yet.")
+else:
+
+    col1, col2 = st.columns([2, 1])
+
+    # -----------------------------
+    # LEFT SIDE - Trends Table
+    # -----------------------------
+    with col1:
+        st.subheader("Live Trends with AI Explanation")
+
+        st.dataframe(
+            df,
+            hide_index=True,
+            use_container_width=True,
+            height=500
         )
 
-        result = response.choices[0].message.content.strip()
+    # -----------------------------
+    # RIGHT SIDE - Trend Frequency
+    # -----------------------------
+    with col2:
+        st.subheader("Top Trend Frequency")
 
-        print("Groq summary generated successfully")
-        return result
+        trend_counts = df['topic'].value_counts().head(10)
 
-    except Exception as e:
-        print("Groq error:", e)
-        return f"{topic} is currently being widely discussed."
+        fig, ax = plt.subplots()
+        trend_counts.plot(
+            kind='bar',
+            ax=ax,
+            color='cyan'
+        )
 
+        ax.set_xlabel("Topic")
+        ax.set_ylabel("Frequency")
+        ax.tick_params(axis='x', rotation=45)
 
-def google_trends_agent():
+        st.pyplot(fig)
 
-    print("========== AI Trend Agent Started ==========")
-
-    if not SERPAPI_KEY:
-        print("ERROR: SERPAPI_KEY missing.")
-        return
-
-    try:
-        params = {
-            "engine": "google_trends_trending_now",
-            "geo": "IN",
-            "api_key": SERPAPI_KEY
-        }
-
-        search = GoogleSearch(params)
-        results = search.get_dict()
-
-        trends = results.get("trending_searches", [])
-
-        if not trends:
-            print("No trends found.")
-            return
-
-        for trend in trends[:10]:
-
-            topic = trend.get("query")
-
-            if not topic:
-                continue
-
-            print("Processing:", topic)
-
-            summary = generate_summary(topic)
-
-            save_trend(topic, "Google Trends", summary)
-
-            print("Saved:", topic)
-
-        print("========== Agent Completed Successfully ==========")
-
-    except Exception as e:
-        print("Agent crash:", e)
+# =============================
+# Footer
+# =============================
+st.markdown("---")
+st.caption("Auto-refreshes every 15 seconds | Powered by LLM-based Autonomous Trend Intelligence Agent")

@@ -12,28 +12,26 @@ if GROQ_API_KEY:
 
 
 # --------------------------------------------------
-# Generate Topic Summary (NOT why trending)
+# Generate Proper Topic Summary
 # --------------------------------------------------
 def generate_summary(topic):
 
     if not client:
-        return f"{topic} is a currently popular search topic in India."
+        return f"{topic} is currently a popular search topic in India."
 
     try:
         prompt = f"""
-You are an AI knowledge assistant.
+You are an intelligent assistant.
 
-Give a short and clear summary explaining what this topic is about.
+Explain clearly and factually what the following topic is about.
 Do NOT explain why it is trending.
-Just explain what it is.
+Just explain what it is in 2-3 simple sentences.
 
 Topic: {topic}
-
-Answer in 2-3 simple sentences.
 """
 
         response = client.chat.completions.create(
-            model="llama3-8b-8192",
+            model="mixtral-8x7b-32768",  # ✅ Updated supported model
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
         )
@@ -42,7 +40,7 @@ Answer in 2-3 simple sentences.
 
     except Exception as e:
         print("Groq error:", e)
-        return f"{topic} is a widely discussed topic currently."
+        return f"{topic} is currently being widely discussed."
 
 
 # --------------------------------------------------
@@ -86,10 +84,8 @@ def google_trends_agent():
 
             print("Processing:", topic)
 
-            # Generate summary (NOT explanation)
             summary = generate_summary(topic)
 
-            # Save to database
             save_trend(topic, "Google Trends", summary)
 
             print("Saved:", topic)

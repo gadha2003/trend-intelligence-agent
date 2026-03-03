@@ -12,52 +12,37 @@ if GROQ_API_KEY:
 
 
 # --------------------------------------------------
-# Generate Smart AI Explanation
+# Generate Topic Summary (NOT why trending)
 # --------------------------------------------------
-def generate_reason(topic, headlines):
+def generate_summary(topic):
 
-    # Fallback if Groq key missing
     if not client:
-        return f"{topic} is trending in India due to increased online searches and public attention."
+        return f"{topic} is a currently popular search topic in India."
 
     try:
         prompt = f"""
-You are an AI trend intelligence analyst.
+You are an AI knowledge assistant.
 
-Explain clearly and specifically WHY this topic is trending in India.
-Do NOT give generic reasons.
-Use the news headlines to infer the actual cause.
+Give a short and clear summary explaining what this topic is about.
+Do NOT explain why it is trending.
+Just explain what it is.
 
 Topic: {topic}
 
-Related News Headlines:
-{headlines}
-
-Explain:
-- What happened?
-- Why are people searching it?
-- What triggered the spike?
-
-Answer in 2-4 concise sentences.
+Answer in 2-3 simple sentences.
 """
 
         response = client.chat.completions.create(
             model="llama3-8b-8192",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.4,
+            temperature=0.3,
         )
 
-        explanation = response.choices[0].message.content.strip()
-
-        # Extra safety: Avoid generic output
-        if "recent news developments" in explanation.lower():
-            return f"{topic} is trending due to specific ongoing events and heightened public interest in India."
-
-        return explanation
+        return response.choices[0].message.content.strip()
 
     except Exception as e:
         print("Groq error:", e)
-        return f"{topic} is trending due to major public attention and related developments."
+        return f"{topic} is a widely discussed topic currently."
 
 
 # --------------------------------------------------
@@ -82,75 +67,30 @@ def google_trends_agent():
         search = GoogleSearch(params)
         results = search.get_dict()
 
-        print("Full SerpAPI Response:")
-        print(results)
-
-        # Handle API errors
         if "error" in results:
             print("SerpAPI Error:", results["error"])
             return
 
-        # Handle multiple possible structures
-        trends = []
-
-        if "trending_searches" in results:
-            trends = results["trending_searches"]
-
-        elif "real_time_trends" in results:
-            trends = results["real_time_trends"]
-
-        elif "daily_searches" in results:
-            trends = results["daily_searches"]
-
-        else:
-            print("No recognized trends key found.")
-            print("Available keys:", results.keys())
-            return
+        trends = results.get("trending_searches", [])
 
         if not trends:
             print("No trends found.")
             return
 
-        # --------------------------------------------------
-        # Process Top 10 Trends
-        # --------------------------------------------------
         for trend in trends[:10]:
 
-            # Support different response formats
-            if isinstance(trend, dict):
-                topic = trend.get("query") or trend.get("title")
-            else:
-                topic = str(trend)
+            topic = trend.get("query")
 
             if not topic:
                 continue
 
             print("Processing:", topic)
 
-            # Fetch related news
-            news_params = {
-                "engine": "google_news",
-                "q": topic,
-                "api_key": SERPAPI_KEY
-            }
-
-            news_search = GoogleSearch(news_params)
-            news_results = news_search.get_dict()
-
-            articles = news_results.get("news_results", [])[:3]
-
-            headlines = "\n".join(
-                [article["title"] for article in articles if "title" in article]
-            )
-
-            if headlines.strip() == "":
-                headlines = "No major news articles found."
-
-            # Generate AI explanation
-            reason = generate_reason(topic, headlines)
+            # Generate summary (NOT explanation)
+            summary = generate_summary(topic)
 
             # Save to database
-            save_trend(topic, "Google Trends", reason)
+            save_trend(topic, "Google Trends", summary)
 
             print("Saved:", topic)
 

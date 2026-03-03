@@ -12,7 +12,7 @@ if GROQ_API_KEY:
 
 
 # --------------------------------------------------
-# Generate Proper Topic Summary
+# Generate Proper Topic Summary (WHAT it is about)
 # --------------------------------------------------
 def generate_summary(topic):
 
@@ -21,8 +21,6 @@ def generate_summary(topic):
 
     try:
         prompt = f"""
-You are an intelligent assistant.
-
 Explain clearly and factually what the following topic is about.
 Do NOT explain why it is trending.
 Just explain what it is in 2-3 simple sentences.
@@ -31,7 +29,7 @@ Topic: {topic}
 """
 
         response = client.chat.completions.create(
-            model="mixtral-8x7b-32768",  # ✅ Updated supported model
+            model="llama3-70b-8192",  # ✅ ACTIVE Groq model
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
         )
@@ -55,7 +53,6 @@ def google_trends_agent():
         return
 
     try:
-
         params = {
             "engine": "google_trends_trending_now",
             "geo": "IN",

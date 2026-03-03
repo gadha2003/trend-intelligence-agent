@@ -11,49 +11,64 @@ if GROQ_API_KEY:
     client = Groq(api_key=GROQ_API_KEY)
 
 
-# ------------------------------------------
-# Generate AI Reason (Safe Version)
-# ------------------------------------------
+# --------------------------------------------------
+# Generate Smart AI Explanation
+# --------------------------------------------------
 def generate_reason(topic, headlines):
 
+    # Fallback if Groq key missing
     if not client:
-        print("Groq API key missing. Using fallback reason.")
-        return "Trending due to strong media coverage and public interest in India."
+        return f"{topic} is trending in India due to increased online searches and public attention."
 
     try:
         prompt = f"""
-Explain in 2-3 short lines why this topic is trending in India.
+You are an AI trend intelligence analyst.
+
+Explain clearly and specifically WHY this topic is trending in India.
+Do NOT give generic reasons.
+Use the news headlines to infer the actual cause.
 
 Topic: {topic}
 
-News Headlines:
+Related News Headlines:
 {headlines}
 
-Give only a concise explanation.
+Explain:
+- What happened?
+- Why are people searching it?
+- What triggered the spike?
+
+Answer in 2-4 concise sentences.
 """
 
         response = client.chat.completions.create(
             model="llama3-8b-8192",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
+            temperature=0.4,
         )
 
-        return response.choices[0].message.content.strip()
+        explanation = response.choices[0].message.content.strip()
+
+        # Extra safety: Avoid generic output
+        if "recent news developments" in explanation.lower():
+            return f"{topic} is trending due to specific ongoing events and heightened public interest in India."
+
+        return explanation
 
     except Exception as e:
         print("Groq error:", e)
-        return "Trending due to recent news developments and public discussions."
+        return f"{topic} is trending due to major public attention and related developments."
 
 
-# ------------------------------------------
-# Main Google Trends Agent
-# ------------------------------------------
+# --------------------------------------------------
+# Google Trends Agent
+# --------------------------------------------------
 def google_trends_agent():
 
     print("========== AI Trend Agent Started ==========")
 
     if not SERPAPI_KEY:
-        print("ERROR: SERPAPI_KEY is missing.")
+        print("ERROR: SERPAPI_KEY missing.")
         return
 
     try:
@@ -67,15 +82,15 @@ def google_trends_agent():
         search = GoogleSearch(params)
         results = search.get_dict()
 
-        print("FULL SERPAPI RESPONSE:")
+        print("Full SerpAPI Response:")
         print(results)
 
-        # ---- Handle API Errors ----
+        # Handle API errors
         if "error" in results:
-            print("SerpAPI ERROR:", results["error"])
+            print("SerpAPI Error:", results["error"])
             return
 
-        # ---- Handle Different Possible Structures ----
+        # Handle multiple possible structures
         trends = []
 
         if "trending_searches" in results:
@@ -88,20 +103,20 @@ def google_trends_agent():
             trends = results["daily_searches"]
 
         else:
-            print("No recognizable trends key found in response.")
+            print("No recognized trends key found.")
             print("Available keys:", results.keys())
             return
-
-        print("TRENDS FOUND:", trends)
 
         if not trends:
             print("No trends found.")
             return
 
-        # ---- Process Trends ----
+        # --------------------------------------------------
+        # Process Top 10 Trends
+        # --------------------------------------------------
         for trend in trends[:10]:
 
-            # Handle different response formats safely
+            # Support different response formats
             if isinstance(trend, dict):
                 topic = trend.get("query") or trend.get("title")
             else:
@@ -129,12 +144,12 @@ def google_trends_agent():
             )
 
             if headlines.strip() == "":
-                headlines = "No major news found."
+                headlines = "No major news articles found."
 
-            # Generate explanation
+            # Generate AI explanation
             reason = generate_reason(topic, headlines)
 
-            # Save to DB
+            # Save to database
             save_trend(topic, "Google Trends", reason)
 
             print("Saved:", topic)

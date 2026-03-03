@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="Multi-Agent AI Trend Monitoring Dashboard",
+    page_title="AI Trend Intelligence Dashboard",
     layout="wide"
 )
 
@@ -12,11 +12,16 @@ import matplotlib
 import os
 from streamlit_autorefresh import st_autorefresh
 
+# Auto refresh every 15 seconds
 st_autorefresh(interval=15000, key="refresh")
 
+# Unicode font support
 matplotlib.rcParams['font.family'] = ['DejaVu Sans']
 matplotlib.rcParams['axes.unicode_minus'] = False
 
+# =============================
+# Animated Background Styling
+# =============================
 st.markdown("""
 <style>
 
@@ -38,17 +43,12 @@ st.markdown("""
         linear-gradient(90deg, rgba(0,255,255,0.2) 1px, transparent 1px);
 
     background-size: 50px 50px;
-
     animation: moveGrid 10s linear infinite;
 }
 
 @keyframes moveGrid {
-    from {
-        transform: translate(0px, 0px);
-    }
-    to {
-        transform: translate(-50px, -50px);
-    }
+    from { transform: translate(0px, 0px); }
+    to { transform: translate(-50px, -50px); }
 }
 
 h1 {
@@ -63,6 +63,7 @@ h2, h3 {
 
 [data-testid="stDataFrame"] {
     background-color: rgba(0,0,0,0.6);
+    border-radius: 10px;
 }
 
 </style>
@@ -70,44 +71,52 @@ h2, h3 {
 <div id="grid-bg"></div>
 """, unsafe_allow_html=True)
 
-st.title("Multi-Agent AI Trend Monitoring Dashboard")
+st.title("AI Trend Intelligence Dashboard")
 
+# =============================
+# Database Connection
+# =============================
 DB_FILE = "trends.db"
 
 if not os.path.exists(DB_FILE):
-
     st.warning("Database not found.")
-
     st.stop()
 
 conn = sqlite3.connect(DB_FILE)
 
 df = pd.read_sql_query(
-    "SELECT topic, source, timestamp FROM trends ORDER BY timestamp DESC",
+    "SELECT topic, reason, timestamp FROM trends ORDER BY timestamp DESC",
     conn
 )
 
 conn.close()
 
+# =============================
+# Display Data
+# =============================
 if df.empty:
-
     st.warning("No data available.")
-
 else:
 
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([2, 1])
 
+    # -----------------------------
+    # LEFT SIDE - Trends Table
+    # -----------------------------
     with col1:
 
-        st.subheader("Live Trends Feed")
+        st.subheader("Live Trends with AI Explanation")
 
         st.dataframe(
             df,
             hide_index=True,
             use_container_width=True,
-            height=400
+            height=500
         )
 
+    # -----------------------------
+    # RIGHT SIDE - Trend Frequency
+    # -----------------------------
     with col2:
 
         st.subheader("Top Trend Frequency")
@@ -115,15 +124,20 @@ else:
         trend_counts = df['topic'].value_counts().head(10)
 
         fig, ax = plt.subplots()
-
         trend_counts.plot(
             kind='bar',
             ax=ax,
             color='cyan'
         )
 
+        ax.set_xlabel("Topic")
+        ax.set_ylabel("Frequency")
+        ax.tick_params(axis='x', rotation=45)
+
         st.pyplot(fig)
 
+# =============================
+# Footer
+# =============================
 st.markdown("---")
-
-st.caption("Auto-refreshes every 15 seconds")
+st.caption("Auto-refreshes every 15 seconds | Powered by LLM-based Autonomous Trend Intelligence Agent")

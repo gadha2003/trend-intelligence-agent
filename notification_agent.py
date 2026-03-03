@@ -12,15 +12,14 @@ def send_email():
     print("Preparing email...")
 
     try:
-
         conn = sqlite3.connect("trends.db")
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT topic, source, timestamp
+            SELECT topic, reason, timestamp
             FROM trends
             ORDER BY timestamp DESC
-            LIMIT 10
+            LIMIT 5
         """)
 
         rows = cursor.fetchall()
@@ -30,22 +29,21 @@ def send_email():
             print("No data to send")
             return
 
-        body = "Top Trending Topics:\n\n"
+        body = "Top Trending Topics with AI Explanation:\n\n"
 
         for row in rows:
-            body += f"{row[0]} ({row[1]})\n"
+            body += f"{row[0]}\nReason: {row[1]}\n\n"
 
         message = MIMEMultipart()
         message["From"] = EMAIL
         message["To"] = EMAIL
-        message["Subject"] = "Trending Topics Update"
+        message["Subject"] = "AI Trend Intelligence Update"
 
         message.attach(MIMEText(body, "plain", "utf-8"))
 
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
         server.login(EMAIL, APP_PASSWORD)
-
         server.sendmail(EMAIL, EMAIL, message.as_string())
         server.quit()
 

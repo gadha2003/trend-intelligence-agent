@@ -9,25 +9,19 @@ CREATE TABLE IF NOT EXISTS trends (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     topic TEXT,
     source TEXT,
+    reason TEXT,
     timestamp TEXT
 )
 """)
 
 conn.commit()
 
-def save_trend(topic, source):
-
+def save_trend(topic, source, reason):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     cursor.execute(
-        "INSERT INTO trends (topic, source, timestamp) VALUES (?, ?, ?)",
-        (topic, source, timestamp)
+        "INSERT INTO trends (topic, source, reason, timestamp) VALUES (?, ?, ?, ?)",
+        (topic, source, reason, timestamp)
     )
 
     conn.commit()
-
-def get_all_trends():
-
-    cursor.execute("SELECT * FROM trends ORDER BY timestamp DESC")
-
-    return cursor.fetchall()

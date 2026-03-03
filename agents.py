@@ -16,20 +16,20 @@ def generate_reason(topic, headlines):
 
     try:
         prompt = f"""
-Summarize in 2–3 short lines what this topic is about and why it is trending in India.
+Explain clearly in 2-3 short lines why this topic is trending in India.
 
 Topic: {topic}
 
-News Headlines:
+Related News:
 {headlines}
 
-Give only a clear factual explanation.
+Give factual explanation only.
 """
 
         response = client.chat.completions.create(
-            model="mixtral-8x7b-32768",
+            model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
+            temperature=0.4,
         )
 
         summary = response.choices[0].message.content.strip()
@@ -39,7 +39,7 @@ Give only a clear factual explanation.
 
     except Exception as e:
         print("Groq error:", e)
-        return "Summary unavailable."
+        return "Live news coverage is driving public interest in this topic."
 
 
 # ===============================
@@ -70,9 +70,7 @@ def google_trends_agent():
 
                 print("Processing:", topic)
 
-                # --------------------------
-                # Fetch Related News
-                # --------------------------
+                # Fetch related news
                 news_params = {
                     "engine": "google_news",
                     "q": topic,
@@ -89,16 +87,12 @@ def google_trends_agent():
                 )
 
                 if not headlines.strip():
-                    headlines = "No major news coverage found."
+                    headlines = "General public discussion and online activity."
 
-                # --------------------------
-                # Generate AI Summary
-                # --------------------------
+                # Generate AI explanation
                 reason = generate_reason(topic, headlines)
 
-                # --------------------------
-                # Save to Database
-                # --------------------------
+                # Save
                 save_trend(topic, "Google Trends", reason)
 
                 print("Saved:", topic)

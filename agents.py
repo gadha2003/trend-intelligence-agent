@@ -11,13 +11,11 @@ if GROQ_API_KEY:
     client = Groq(api_key=GROQ_API_KEY)
 
 
-# --------------------------------------------------
-# Generate Proper Topic Summary (WHAT it is about)
-# --------------------------------------------------
 def generate_summary(topic):
 
     if not client:
-        return f"{topic} is currently a popular search topic in India."
+        print("Groq client not initialized")
+        return f"{topic} is currently being widely discussed."
 
     try:
         prompt = f"""
@@ -29,21 +27,21 @@ Topic: {topic}
 """
 
         response = client.chat.completions.create(
-            model="llama3-70b-8192",  # ✅ ACTIVE Groq model
+            model="llama-3.1-70b-versatile",   # ✅ CURRENT ACTIVE MODEL
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
         )
 
-        return response.choices[0].message.content.strip()
+        result = response.choices[0].message.content.strip()
+
+        print("Groq summary generated successfully")
+        return result
 
     except Exception as e:
         print("Groq error:", e)
         return f"{topic} is currently being widely discussed."
 
 
-# --------------------------------------------------
-# Google Trends Agent
-# --------------------------------------------------
 def google_trends_agent():
 
     print("========== AI Trend Agent Started ==========")
@@ -61,10 +59,6 @@ def google_trends_agent():
 
         search = GoogleSearch(params)
         results = search.get_dict()
-
-        if "error" in results:
-            print("SerpAPI Error:", results["error"])
-            return
 
         trends = results.get("trending_searches", [])
 
